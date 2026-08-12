@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "800048642916",
+    "project_id": "liftwithfriends-44d7a",
+    "storage_bucket": "liftwithfriends-44d7a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800048642916:android:ac0fe7b47e56355c2d9871",
+        "android_client_info": {
+          "package_name": "com.example.toughlove_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlMqNukRyl7T-Twa2ANBUvaSD6h8hYMy8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
