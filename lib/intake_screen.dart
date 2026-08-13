@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'plan_screen.dart';
 import 'workout_plan.dart';
+import 'firestore_service.dart';
 
 class IntakeScreen extends StatefulWidget {
   const IntakeScreen({super.key});
@@ -35,6 +36,16 @@ Future<void> _submitForm() async {
 
   if (response.statusCode == 200) {
     final plan = WorkoutPlan.fromJson(jsonDecode(response.body));
+
+    await FirestoreService().saveIntakeAndPlan(
+      experienceLevel: _experienceLevel!,
+      daysPerWeek: _daysPerWeek!,
+      goal: _goal!,
+      equipmentAccess: _equipmentAccess!,
+      injuries: _injuriesController.text,
+      plan: plan,
+    );
+
     if (mounted) {
       Navigator.push(
         context,
