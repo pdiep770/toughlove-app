@@ -38,6 +38,6 @@ class FirestoreService {
                   }).toList(),
             }).toList(),
       },
-    });
+    }, SetOptions(merge: true));  
   }
 }
