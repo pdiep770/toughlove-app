@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'friend_service.dart';
 import 'user_profile_service.dart';
+import 'chat_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -124,7 +125,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     const Text('No friends yet — share your code above!')
                   else
                     ..._friends.map((f) => Card(
-                          child: ListTile(leading: const Icon(Icons.person), title: Text(f['displayName'])),
+                          child: ListTile(
+                            leading: const Icon(Icons.person),
+                            title: Text(f['displayName']),
+                            trailing: const Icon(Icons.chat_bubble_outline),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(friendUid: f['uid'], friendName: f['displayName']),
+                                ),
+                              );
+                            },
+                          ),
                         )),
                 ],
               ),
