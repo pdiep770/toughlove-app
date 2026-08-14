@@ -17,45 +17,47 @@ class _IntakeScreenState extends State<IntakeScreen> {
   int? _daysPerWeek;
   String? _goal;
   String? _equipmentAccess;
+  bool _includeExplosiveTraining = false;
   final TextEditingController _injuriesController = TextEditingController();
 
-Future<void> _submitForm() async {
-  final url = Uri.parse('http://localhost:8080/api/generate-plan');
+  Future<void> _submitForm() async {
+    final url = Uri.parse('http://localhost:8080/api/generate-plan');
 
-  final response = await http.post(
-    url,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'experienceLevel': _experienceLevel,
-      'daysPerWeek': _daysPerWeek,
-      'goal': _goal,
-      'equipmentAccess': _equipmentAccess,
-      'injuries': _injuriesController.text,
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    final plan = WorkoutPlan.fromJson(jsonDecode(response.body));
-
-    await FirestoreService().saveIntakeAndPlan(
-      experienceLevel: _experienceLevel!,
-      daysPerWeek: _daysPerWeek!,
-      goal: _goal!,
-      equipmentAccess: _equipmentAccess!,
-      injuries: _injuriesController.text,
-      plan: plan,
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'experienceLevel': _experienceLevel,
+        'daysPerWeek': _daysPerWeek,
+        'goal': _goal,
+        'equipmentAccess': _equipmentAccess,
+        'injuries': _injuriesController.text,
+        'includeExplosiveTraining': _includeExplosiveTraining,
+      }),
     );
 
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => PlanScreen(plan: plan)),
+    if (response.statusCode == 200) {
+      final plan = WorkoutPlan.fromJson(jsonDecode(response.body));
+
+      await FirestoreService().saveIntakeAndPlan(
+        experienceLevel: _experienceLevel!,
+        daysPerWeek: _daysPerWeek!,
+        goal: _goal!,
+        equipmentAccess: _equipmentAccess!,
+        injuries: _injuriesController.text,
+        plan: plan,
       );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => PlanScreen(plan: plan)),
+        );
+      }
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
     }
-  } else {
-    print('Error: ${response.statusCode} - ${response.body}');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +115,16 @@ Future<void> _submitForm() async {
               onChanged: (value) => setState(() => _equipmentAccess = value),
             ),
             const SizedBox(height: 16),
+
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Include explosive/plyometric training'),
+              subtitle: const Text('Jump and power work — great for volleyball, basketball, and other jump sports'),
+              value: _includeExplosiveTraining,
+              onChanged: (value) => setState(() => _includeExplosiveTraining = value ?? false),
+            ),
+            const SizedBox(height: 8),
 
             const Text('Injuries or limitations (optional)'),
             TextField(
