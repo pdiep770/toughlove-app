@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'workout_plan.dart';
+import 'friends_screen.dart';
 
 class PlanScreen extends StatelessWidget {
   final WorkoutPlan plan;
@@ -9,7 +10,18 @@ class PlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Your ${plan.splitType.replaceAll('_', ' ')} plan')),
+      appBar: AppBar(
+        title: Text('Your ${plan.splitType.replaceAll('_', ' ')} plan'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people),
+            tooltip: 'Friends',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const FriendsScreen()));
+            },
+          ),
+        ],
+      ),
       body: ListView.builder(
         itemCount: plan.days.length,
         itemBuilder: (context, index) {
@@ -25,9 +37,7 @@ class PlanScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   ...day.exercises.map((ex) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(
-                          '${ex.name} — ${ex.sets}x${ex.repsLow}-${ex.repsHigh} @ ${ex.weight.toStringAsFixed(0)} lbs',
-                        ),
+                        child: Text('${ex.name} — ${ex.sets}x${ex.repsLow}-${ex.repsHigh} @ ${ex.weight.toStringAsFixed(0)} lbs'),
                       )),
                 ],
               ),
