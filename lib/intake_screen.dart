@@ -19,6 +19,14 @@ class _IntakeScreenState extends State<IntakeScreen> {
   String? _equipmentAccess;
   bool _includeExplosiveTraining = false;
   final TextEditingController _injuriesController = TextEditingController();
+  final TextEditingController _squatMaxController = TextEditingController();
+  final TextEditingController _benchMaxController = TextEditingController();
+  final TextEditingController _deadliftMaxController = TextEditingController();
+  final TextEditingController _ohpMaxController = TextEditingController();
+
+  bool get _showMaxFields =>
+      (_experienceLevel == 'intermediate' || _experienceLevel == 'advanced') &&
+      _equipmentAccess == 'full_gym';
 
   Future<void> _submitForm() async {
     final url = Uri.parse('http://localhost:8080/api/generate-plan');
@@ -33,6 +41,10 @@ class _IntakeScreenState extends State<IntakeScreen> {
         'equipmentAccess': _equipmentAccess,
         'injuries': _injuriesController.text,
         'includeExplosiveTraining': _includeExplosiveTraining,
+        'squatOneRepMax': double.tryParse(_squatMaxController.text),
+        'benchOneRepMax': double.tryParse(_benchMaxController.text),
+        'deadliftOneRepMax': double.tryParse(_deadliftMaxController.text),
+        'overheadPressOneRepMax': double.tryParse(_ohpMaxController.text),
       }),
     );
 
@@ -116,6 +128,29 @@ class _IntakeScreenState extends State<IntakeScreen> {
             ),
             const SizedBox(height: 16),
 
+            if (_showMaxFields) ...[
+              const Divider(),
+              const SizedBox(height: 8),
+              const Text('Known 1-rep maxes (optional)',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                "Enter your true max if you know it. Not sure? Estimate from a recent hard set: weight × (1 + reps ÷ 30).",
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 12),
+              _maxField('Squat', _squatMaxController),
+              const SizedBox(height: 8),
+              _maxField('Bench Press', _benchMaxController),
+              const SizedBox(height: 8),
+              _maxField('Deadlift', _deadliftMaxController),
+              const SizedBox(height: 8),
+              _maxField('Overhead Press', _ohpMaxController),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+            ],
+
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
@@ -140,6 +175,21 @@ class _IntakeScreenState extends State<IntakeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _maxField(String label, TextEditingController controller) {
+    return Row(
+      children: [
+        SizedBox(width: 120, child: Text(label)),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(suffixText: 'lbs', isDense: true),
+          ),
+        ),
+      ],
     );
   }
 }
