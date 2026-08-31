@@ -63,7 +63,7 @@ class _IntakeScreenState extends State<IntakeScreen> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PlanScreen(plan: plan)),
+          MaterialPageRoute(builder: (context) => PlanScreen(plan: plan, goal: _goal!)),
         );
       }
     } else {
