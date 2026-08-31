@@ -41,7 +41,7 @@ This should be cleaned up at some point (`git branch -M main && git push -u orig
 
 - **Backend:** Java 21, Spring Boot 4.1.0 (via `spring-boot-starter-parent`), Maven (`./mvnw spring-boot:run`, runs on `localhost:8080`)
 - **Frontend:** Flutter/Dart, targets iOS + Android + Web from one codebase
-- **Database & Auth:** Firebase — Firestore (NoSQL) + Firebase Anonymous Authentication (no login screen; each device/browser gets a silent, stable anonymous UID on first launch)
+- **Database & Auth:** Firebase — Firestore (NoSQL) + Firebase Authentication with real email/password accounts (switched 2026-08-31 from Anonymous Auth — see section 6 and section 8's design-decisions entry)
 - **Firebase project ID:** `liftwithfriends-44d7a` (internal project name is a holdover from an earlier app name — cosmetic mismatch with "Chalked In" branding, never fixed, no functional impact)
 - **Real-time features:** Firestore live listeners (`.snapshots()` + Flutter `StreamBuilder`) power the chat feature
 - **Testing:** Backend uses JUnit 5 + AssertJ, already available via the test-scoped `spring-boot-starter-webmvc-test`/`spring-boot-starter-validation-test` dependencies in `pom.xml` — no extra dependency setup needed to write more backend tests. Frontend uses `flutter_test` (already in `pubspec.yaml`'s `dev_dependencies`).
@@ -110,10 +110,13 @@ If this system gets built for real, it would need: (1) seeding logic in `PlanGen
 All files in `lib/`.
 
 **App entry & auth:**
-- `main.dart` — initializes Firebase, signs in anonymously (`FirebaseAuth.instance.signInAnonymously()`), routes to `StartupScreen`. Contains dead leftover code from `flutter create` (`MyHomePage`/counter widget) that's never actually used — `MyApp.home` is `StartupScreen`, not `MyHomePage`. Harmless but worth knowing if you go looking for the counter demo.
-- `startup_screen.dart` — checks whether a profile exists (`UserProfileService.getProfile()`); routes to `ProfileSetupScreen` (new) or `IntakeScreen` (returning). **Known gap, confirmed in code:** doesn't check for an existing saved plan, so a returning user with a plan already generated still sees the intake form again instead of a "resume" experience. Worth fixing.
-- `user_profile_service.dart` — generates a random 6-character friend code, creates/reads the user's profile doc
-- `profile_setup_screen.dart` — simple display-name entry, first screen a new user sees
+- **Auth model changed 2026-08-31: real email/password accounts, not anonymous.** Originally the app used Firebase Anonymous Auth (silent, no login screen — a stable UID per device). Since each friend-test participant uses their own device, and anonymous auth has no way to recover an account if local data is ever cleared, switched to real Firebase email/password accounts instead. `main.dart` no longer calls `signInAnonymously()` — it just initializes Firebase and renders `StartupScreen`, which now gates everything behind auth state.
+- `auth_screen.dart` — **new 2026-08-31.** Combined sign-up/log-in screen (a single `_isSignUp` toggle switches the button/copy between modes) with email + password fields, calling `FirebaseAuth.instance.createUserWithEmailAndPassword` or `signInWithEmailAndPassword`. Shows `FirebaseAuthException.message` inline on failure. Doesn't navigate directly on success — `StartupScreen`'s `authStateChanges()` stream picks up the new signed-in state and reroutes automatically.
+- `startup_screen.dart` — now two layers. The outer `StartupScreen` is a `StreamBuilder<User?>` on `FirebaseAuth.instance.authStateChanges()`: no signed-in user → `AuthScreen`; signed in → `_ProfileRouter` (private `StatefulWidget`, same file). `_ProfileRouter` holds the pre-existing profile/plan-resume logic: checks `UserProfileService.getProfile()` — no profile → `ProfileSetupScreen`; profile but no `currentPlan` → `IntakeScreen`; profile with a `currentPlan` → parses it and goes straight to `PlanScreen(plan: ..., goal: ...)`. **This also fixes the previous resume gap** (a returning user with an existing plan used to see the intake form again every time) as a side effect of restructuring for real auth.
+- `user_profile_service.dart` — generates a random 6-character friend code, creates/reads the user's profile doc. Unchanged by the auth switch — it already worked off `FirebaseAuth.instance.currentUser?.uid`, which now just happens to be a real account's UID instead of an anonymous one.
+- `profile_setup_screen.dart` — simple display-name entry, first screen a new (now real-account) user sees after signing up. Unchanged.
+- **Sign-out:** `plan_screen.dart` has a logout `IconButton` in the app bar next to Friends. Calls `FirebaseAuth.instance.signOut()` then `Navigator.of(context).popUntil((route) => route.isFirst)` to pop back to the root route — necessary because `PlanScreen` is pushed on top of `StartupScreen` in the navigator stack, so signing out alone wouldn't visually return to `AuthScreen` without also popping back to root.
+- **Manual setup required:** Email/Password sign-in must be enabled in the Firebase console (Authentication → Sign-in method → Email/Password → Enable) for account creation/login to work at all. Not something that can be verified or toggled from code.
 
 **Core flow:**
 - `intake_screen.dart` — the main form (experience/days/goal/equipment/injuries/explosive-training toggle). 1RM fields only render conditionally (`intermediate`/`advanced` experience + `full_gym` equipment). Submits to `/api/generate-plan`, saves via `FirestoreService.saveIntakeAndPlan`, navigates to `PlanScreen(plan: plan, goal: _goal!)`.
@@ -170,6 +173,7 @@ conversations/{conversationId}/messages/{messageId}
 - **Wearable integration (Apple Watch/Garmin/Oura) is deferred to after the friend test.** Reasoning: each is a separate SDK/developer program with no shared code, and wearables don't reliably auto-capture structured strength training data anyway — better to revisit once logging exists and the core concept is validated with real users.
 - **The visual design pass is deliberately deferred** until all core features are done, as one dedicated pass rather than piecemeal styling — the app currently still uses mostly default Flutter Material theming (a leftover `deepPurple` seed color from the `flutter create` template in several places).
 - **Unit tests are now a deliberate habit, not an afterthought** (established 2026-08-31, after discovering the backend had zero real coverage). Pair tests with new non-trivial logic in the same pass, in both repos.
+- **Switched from Anonymous Auth to real email/password accounts** (2026-08-31). Anonymous auth only persisted identity locally on one device with no way to recover it — fine in theory, but every friend-test participant uses their own device long-term, and losing local storage (reinstall, cleared browser data, new phone) would mean losing access to their account permanently with no recourse. Real accounts cost a small amount of signup friction but make the account actually recoverable. Considered account-linking (keep anonymous-first UX, let people optionally attach a credential later) as a lower-friction alternative but went with a clean replacement instead for simplicity.
 
 ---
 
@@ -219,17 +223,18 @@ Established through this project's development; use these approaches rather than
 
 **✅ Built and confirmed working end-to-end:**
 - Intake → plan generation → Firestore persistence
-- Firebase Anonymous Auth
+- Real email/password accounts (see section 6) — replaced Firebase Anonymous Auth
 - Exercise library (expanded, randomized, goal-aware)
 - 1RM percentage scaling (full_gym + intermediate/advanced only) — now correctly forces the tracked lift into the plan (see the mustInclude bug fix, section 4)
 - Explosive/plyometric training toggle
 - User profiles + friend codes
 - Friend requests (send/accept/decline) + friends list
 - Real-time chat
+- **Workout logging, full loop, manually click-tested in Chrome:** generate a plan → "Log this workout" → per-exercise weight + feel rating → submit → results screen with explanations and updated weights → `PlanScreen` reflects the change. Committed and pushed to `mainline` in both repos (backend: 1RM `mustInclude` fix + 33 unit tests; frontend: `WorkoutLogScreen`/`adjustment_result.dart`/Firestore wiring + 2 unit tests).
+- **Startup resume gap, fixed:** a returning signed-in user with an existing plan now lands directly on `PlanScreen` instead of seeing the intake form again (see section 6, `_ProfileRouter`).
 
-**🟡 Built this session (2026-08-31), not yet manually click-tested in a browser:**
-- Workout logging, frontend and backend both now exist and connect: `WorkoutLogScreen` → `/api/log-workout` → `AdjustmentService` → Firestore (`saveWorkoutLog` + `updateDayExercises`) → `PlanScreen` reflects the updated day. Backend logic has real unit test coverage (`AdjustmentServiceTest`) and the frontend model has a small test (`adjustment_result_test.dart`), but the full click-through — generate a plan, tap "Log this workout," submit ratings, confirm the results screen and the updated `PlanScreen` weight, then confirm in the Firestore console that both the `logs` subcollection entry and the updated `currentPlan.days` landed correctly — has not yet been done. **This is the immediate next step**, following the testing methodology in section 9.
-- Not committed to git yet in either repo as of this writing.
+**🟡 Built this session (2026-08-31), not yet manually tested:**
+- Email/password auth (sign-up, log-in, sign-out) — code is written and analyzes clean, but hasn't been clicked through yet. **Also needs Email/Password enabled in the Firebase console (Authentication → Sign-in method) before it can work at all** — not yet confirmed done. Not yet committed to git.
 
 **⏸️ Backend complete, no frontend UI:**
 - Periodization/program engine (`/api/program-status`). Explicitly on hold — user wants flexible custom-phase support when it's eventually built, not a fixed template. See section 5 for the separate, more fundamental question of whether the "training max" concept it depends on (`TrainingMaxes`) is worth building out at all.
@@ -238,7 +243,8 @@ Established through this project's development; use these approaches rather than
 - Injuries-based exercise exclusion (the `injuries` field is collected but never used in generation logic)
 - Streaks
 - Wearable integration
-- Visual design pass
+- Visual design pass — explicitly reconsidered and reconfirmed as deferred on 2026-08-31 after looking at the live (still-default-themed) app; still waiting until logging/auth are both fully solid
+- Deployment: backend still only runs on `localhost:8080`; no host chosen yet, no domain purchased (and none needed yet — see the deployment discussion this session, a free host subdomain is enough for the friend test)
 - Pre-launch prep (Apple Developer Program enrollment, Play Console setup, privacy policy)
 - The actual friend test (the whole point of the project so far)
 
@@ -246,9 +252,9 @@ Established through this project's development; use these approaches rather than
 
 ## 11. Suggested Immediate Next Steps
 
-1. **Click-through verify the workout-logging feature** per the section 9 methodology: `ls -la` the new files to confirm they're real, restart the backend, `flutter run`, generate a plan with a real 1RM, log a workout, confirm the results screen and the updated `PlanScreen`, then check Firestore directly (`logs` subcollection + `currentPlan.days`).
-2. Commit the pending changes in both repos once verified (backend: `ExerciseLibrary.java`/`PlanGeneratorService.java` fix + 3 new test files; frontend: `firestore_service.dart`/`intake_screen.dart`/`plan_screen.dart` changes + `workout_log_screen.dart`/`adjustment_result.dart`/its test).
+1. **Enable Email/Password sign-in in the Firebase console**, then click-through test sign-up → profile setup → intake → plan, sign-out, and log back in on the same device to confirm the whole auth loop works.
+2. Commit and push the auth changes (`main.dart`, `startup_screen.dart`, new `auth_screen.dart`, `plan_screen.dart`'s sign-out button) once verified.
 3. Decide deliberately whether the training-max system (section 5) is worth building for real, or whether direct-1RM-scaling + flat-increment logging adjustment is good enough for the friend test.
-4. Fix the `startup_screen.dart` resume gap (returning users with an existing plan should skip straight to it, not see the intake form again).
-5. Once logging is confirmed solid: design pass → pre-launch prep → real friend test with 4-6 people over 2-4 weeks.
+4. Deploy the backend somewhere with a stable HTTPS URL (Cloud Run fits naturally given the existing GCP/Firebase project; Railway/Render are simpler alternatives) and make the frontend's API base URL configurable instead of hardcoded `localhost:8080` — needed before anyone besides the developer can use the app on their own device.
+5. Once auth + logging are both confirmed solid: design pass → pre-launch prep → real friend test with 4-6 people over 2-4 weeks.
 6. Periodization UI, streaks, and wearables are all real but explicitly *not* urgent — don't let them pull focus from getting to the friend test.
