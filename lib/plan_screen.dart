@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'workout_plan.dart';
 import 'workout_day.dart';
 import 'friends_screen.dart';
@@ -45,6 +46,13 @@ class _PlanScreenState extends State<PlanScreen> {
     }
   }
 
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,6 +65,11 @@ class _PlanScreenState extends State<PlanScreen> {
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const FriendsScreen()));
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Log out',
+            onPressed: _signOut,
           ),
         ],
       ),
