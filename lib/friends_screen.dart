@@ -60,6 +60,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Friends')),
       body: _loading
@@ -71,8 +73,25 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 children: [
                   if (_myFriendCode != null) ...[
                     const Text('Your friend code'),
-                    const SizedBox(height: 4),
-                    Text(_myFriendCode!, style: Theme.of(context).textTheme.headlineMedium),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        _myFriendCode!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 4,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
                   const Text('Add a friend'),

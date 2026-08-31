@@ -67,18 +67,25 @@ class _ChatScreenState extends State<ChatScreen> {
                           final data = messages[index].data() as Map<String, dynamic>;
                           final isMe = data['senderUid'] == myUid;
 
+                          final colorScheme = Theme.of(context).colorScheme;
+
                           return Align(
                             alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                             child: Container(
                               margin: const EdgeInsets.symmetric(vertical: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.75,
+                              ),
                               decoration: BoxDecoration(
-                                color: isMe ? Colors.deepPurple : Colors.grey[300],
-                                borderRadius: BorderRadius.circular(12),
+                                color: isMe ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
                                 data['text'] ?? '',
-                                style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                                style: TextStyle(
+                                  color: isMe ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           );
