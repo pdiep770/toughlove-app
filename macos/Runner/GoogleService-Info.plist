@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>800048642916-tar7fie0ebrsmlr1algvpjsm7ove9jtl.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.800048642916-tar7fie0ebrsmlr1algvpjsm7ove9jtl</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAP9CuM8IULVJyVZBAom9oCO7Pfs8DN13k</string>
+	<key>GCM_SENDER_ID</key>
+	<string>800048642916</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.toughloveApp</string>
+	<key>PROJECT_ID</key>
+	<string>liftwithfriends-44d7a</string>
+	<key>STORAGE_BUCKET</key>
+	<string>liftwithfriends-44d7a.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:800048642916:ios:762c169af2ae34fd2d9871</string>
+</dict>
+</plist>

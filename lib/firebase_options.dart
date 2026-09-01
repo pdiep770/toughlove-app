@@ -52,27 +52,27 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDlMqNukRyl7T-Twa2ANBUvaSD6h8hYMy8',
-    appId: '1:800048642916:android:ac0fe7b47e56355c2d9871',
+    appId: '1:800048642916:android:0b20e287b6c08b2c2d9871',
     messagingSenderId: '800048642916',
     projectId: 'liftwithfriends-44d7a',
     storageBucket: 'liftwithfriends-44d7a.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAP9CuM8IULVJyVZBAom9oCO7Pfs8DN13k',
-    appId: '1:800048642916:ios:762c169af2ae34fd2d9871',
+    appId: '1:800048642916:ios:7547525791b7ea302d9871',
     messagingSenderId: '800048642916',
     projectId: 'liftwithfriends-44d7a',
     storageBucket: 'liftwithfriends-44d7a.firebasestorage.app',
-    iosBundleId: 'com.example.toughloveApp',
+    iosClientId: '800048642916-7mfk84jepuq6kf4mkeihesu3174f0v0e.apps.googleusercontent.com',
+    iosBundleId: 'com.chalkedin.app',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAP9CuM8IULVJyVZBAom9oCO7Pfs8DN13k',
     appId: '1:800048642916:ios:762c169af2ae34fd2d9871',
     messagingSenderId: '800048642916',
     projectId: 'liftwithfriends-44d7a',
     storageBucket: 'liftwithfriends-44d7a.firebasestorage.app',
+    iosClientId: '800048642916-tar7fie0ebrsmlr1algvpjsm7ove9jtl.apps.googleusercontent.com',
     iosBundleId: 'com.example.toughloveApp',
   );
 

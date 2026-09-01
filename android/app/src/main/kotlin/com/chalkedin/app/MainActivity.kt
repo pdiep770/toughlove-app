@@ -1,4 +1,4 @@
-package com.example.toughlove_app
+package com.chalkedin.app
 
 import io.flutter.embedding.android.FlutterActivity
 

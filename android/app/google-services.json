@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:800048642916:android:ac0fe7b47e56355c2d9871",
+        "mobilesdk_app_id": "1:800048642916:android:0b20e287b6c08b2c2d9871",
         "android_client_info": {
-          "package_name": "com.example.toughlove_app"
+          "package_name": "com.chalkedin.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "800048642916-43p33i0ur49gcniaq9pbrobuislvqmfg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDlMqNukRyl7T-Twa2ANBUvaSD6h8hYMy8"
@@ -20,7 +25,55 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "800048642916-43p33i0ur49gcniaq9pbrobuislvqmfg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "800048642916-7mfk84jepuq6kf4mkeihesu3174f0v0e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.chalkedin.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800048642916:android:ac0fe7b47e56355c2d9871",
+        "android_client_info": {
+          "package_name": "com.example.toughlove_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "800048642916-43p33i0ur49gcniaq9pbrobuislvqmfg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlMqNukRyl7T-Twa2ANBUvaSD6h8hYMy8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "800048642916-43p33i0ur49gcniaq9pbrobuislvqmfg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "800048642916-7mfk84jepuq6kf4mkeihesu3174f0v0e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.chalkedin.app"
+              }
+            }
+          ]
         }
       }
     }
