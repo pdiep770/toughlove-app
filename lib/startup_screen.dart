@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'user_profile_service.dart';
 import 'profile_setup_screen.dart';
 import 'intake_screen.dart';
-import 'plan_screen.dart';
+import 'home_screen.dart';
 import 'workout_plan.dart';
 import 'auth_screen.dart';
 
@@ -27,7 +27,7 @@ class StartupScreen extends StatelessWidget {
   }
 }
 
-enum _Destination { loading, profileSetup, intake, plan }
+enum _Destination { loading, profileSetup, intake, home }
 
 class _ProfileRouter extends StatefulWidget {
   const _ProfileRouter();
@@ -61,7 +61,7 @@ class _ProfileRouterState extends State<_ProfileRouter> {
       setState(() {
         _plan = WorkoutPlan.fromJson(currentPlan);
         _goal = profile['goal'] as String;
-        _destination = _Destination.plan;
+        _destination = _Destination.home;
       });
       return;
     }
@@ -78,8 +78,8 @@ class _ProfileRouterState extends State<_ProfileRouter> {
         return const ProfileSetupScreen();
       case _Destination.intake:
         return const IntakeScreen();
-      case _Destination.plan:
-        return PlanScreen(plan: _plan!, goal: _goal!);
+      case _Destination.home:
+        return HomeScreen(plan: _plan!, goal: _goal!);
     }
   }
 }
