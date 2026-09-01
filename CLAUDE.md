@@ -43,6 +43,7 @@ This should be cleaned up at some point (`git branch -M main && git push -u orig
 - **Frontend:** Flutter/Dart, targets iOS + Android + Web from one codebase
 - **Database & Auth:** Firebase — Firestore (NoSQL) + Firebase Authentication with real email/password accounts (switched 2026-08-31 from Anonymous Auth — see section 6 and section 8's design-decisions entry)
 - **Firebase project ID:** `liftwithfriends-44d7a` (internal project name is a holdover from an earlier app name — cosmetic mismatch with "Chalked In" branding, never fixed, no functional impact)
+- **App identifier:** `com.chalkedin.app` for both iOS (`PRODUCT_BUNDLE_IDENTIFIER`) and Android (`applicationId`/`namespace`) — changed 2026-09-01 from the `com.example.*` `flutter create` placeholder, which Apple/Google won't accept for real distribution. This is effectively permanent post-publish (changing it later means starting over as a "new" app in either store). macOS/Windows/Web identifiers were left untouched. Firebase has separate registered Android/iOS apps under this identifier on the same project — see section 6 for how that was regenerated.
 - **Real-time features:** Firestore live listeners (`.snapshots()` + Flutter `StreamBuilder`) power the chat feature
 - **Testing:** Backend uses JUnit 5 + AssertJ, already available via the test-scoped `spring-boot-starter-webmvc-test`/`spring-boot-starter-validation-test` dependencies in `pom.xml` — no extra dependency setup needed to write more backend tests. Frontend uses `flutter_test` (already in `pubspec.yaml`'s `dev_dependencies`).
 
@@ -114,7 +115,8 @@ All files in `lib/`.
 **App entry & auth:**
 - **Auth model changed 2026-08-31: real email/password accounts, not anonymous.** Originally the app used Firebase Anonymous Auth (silent, no login screen — a stable UID per device). Since each friend-test participant uses their own device, and anonymous auth has no way to recover an account if local data is ever cleared, switched to real Firebase email/password accounts instead. `main.dart` no longer calls `signInAnonymously()` — it just initializes Firebase and renders `StartupScreen`, which now gates everything behind auth state.
 - `auth_screen.dart` — **new 2026-08-31.** Combined sign-up/log-in screen (a single `_isSignUp` toggle switches the button/copy between modes) with email + password fields, calling `FirebaseAuth.instance.createUserWithEmailAndPassword` or `signInWithEmailAndPassword`. Shows `FirebaseAuthException.message` inline on failure. Doesn't navigate directly on success — `StartupScreen`'s `authStateChanges()` stream picks up the new signed-in state and reroutes automatically.
-- `startup_screen.dart` — now two layers. The outer `StartupScreen` is a `StreamBuilder<User?>` on `FirebaseAuth.instance.authStateChanges()`: no signed-in user → `AuthScreen`; signed in → `_ProfileRouter` (private `StatefulWidget`, same file). `_ProfileRouter` holds the pre-existing profile/plan-resume logic: checks `UserProfileService.getProfile()` — no profile → `ProfileSetupScreen`; profile but no `currentPlan` → `IntakeScreen`; profile with a `currentPlan` → parses it and goes straight to `PlanScreen(plan: ..., goal: ...)`. **This also fixes the previous resume gap** (a returning user with an existing plan used to see the intake form again every time) as a side effect of restructuring for real auth.
+- `startup_screen.dart` — now two layers. The outer `StartupScreen` is a `StreamBuilder<User?>` on `FirebaseAuth.instance.authStateChanges()`: no signed-in user → `AuthScreen`; signed in → `_ProfileRouter` (private `StatefulWidget`, same file). `_ProfileRouter` holds the profile/plan-resume logic: checks `UserProfileService.getProfile()` — no profile → `ProfileSetupScreen`; profile but no `currentPlan` → `IntakeScreen`; profile with a `currentPlan` → parses it and goes to **`HomeScreen`** (added 2026-09-01, see below — this replaced going straight to `PlanScreen`, which is how the original resume gap got fixed as a side effect of the auth restructuring).
+- `home_screen.dart` — **new 2026-09-01.** The landing point for a returning signed-in user who already has a plan: shows a summary card (`splitType` + day count) and two actions — "View My Plan" (pushes `PlanScreen`, back arrow returns here) and "Generate New Plan" (confirmation dialog since it replaces the current plan, then pushes `IntakeScreen`). Also carries the Friends/Logout icons so it works as a real hub, not just Plan. First-time plan generation deliberately does **not** route through here — `IntakeScreen` still goes straight to the newly generated `PlanScreen` on first submit (instant gratification); Home only appears on return visits once a plan already exists. `IntakeScreen`'s post-generate navigation changed from `Navigator.push` to `Navigator.pushReplacement` so that generating a new plan *from* Home lands cleanly on the new plan with back going to Home, rather than leaving a stale filled-out form in the stack.
 - `user_profile_service.dart` — generates a random 6-character friend code, creates/reads the user's profile doc. Unchanged by the auth switch — it already worked off `FirebaseAuth.instance.currentUser?.uid`, which now just happens to be a real account's UID instead of an anonymous one.
 - `profile_setup_screen.dart` — simple display-name entry, first screen a new (now real-account) user sees after signing up. Unchanged.
 - **Sign-out:** `plan_screen.dart` has a logout `IconButton` in the app bar next to Friends. Calls `FirebaseAuth.instance.signOut()` then `Navigator.of(context).popUntil((route) => route.isFirst)` to pop back to the root route — necessary because `PlanScreen` is pushed on top of `StartupScreen` in the navigator stack, so signing out alone wouldn't visually return to `AuthScreen` without also popping back to root.
@@ -221,42 +223,43 @@ Established through this project's development; use these approaches rather than
 
 ---
 
-## 10. Current Status (as of 2026-08-31)
+## 10. Current Status (as of 2026-09-01)
 
-**✅ Built and confirmed working end-to-end:**
-- Intake → plan generation → Firestore persistence
-- Real email/password accounts (see section 6) — replaced Firebase Anonymous Auth
+**✅ Built and confirmed working end-to-end (all committed and pushed to `mainline` in both repos):**
+- Intake → plan generation → Firestore persistence, **with day count now correctly matching `daysPerWeek`** (cycles the split pattern — see the bug fix in section 4; previously always produced a fixed 2-3 days regardless of selection)
+- Real email/password accounts — sign up, profile setup, sign out, log back in, all manually click-tested and confirmed working
 - Exercise library (expanded, randomized, goal-aware)
-- 1RM percentage scaling (full_gym + intermediate/advanced only) — now correctly forces the tracked lift into the plan (see the mustInclude bug fix, section 4)
+- 1RM percentage scaling (full_gym + intermediate/advanced only) — correctly forces the tracked lift into the plan (mustInclude fix, section 4)
 - Explosive/plyometric training toggle
-- User profiles + friend codes
-- Friend requests (send/accept/decline) + friends list
-- Real-time chat
-- **Workout logging, full loop, manually click-tested in Chrome:** generate a plan → "Log this workout" → per-exercise weight + feel rating → submit → results screen with explanations and updated weights → `PlanScreen` reflects the change. Committed and pushed to `mainline` in both repos (backend: 1RM `mustInclude` fix + 33 unit tests; frontend: `WorkoutLogScreen`/`adjustment_result.dart`/Firestore wiring + 2 unit tests).
-- **Startup resume gap, fixed:** a returning signed-in user with an existing plan now lands directly on `PlanScreen` instead of seeing the intake form again (see section 6, `_ProfileRouter`).
+- User profiles + friend codes, friend requests, real-time chat
+- Workout logging, full loop, manually click-tested in Chrome
+- **Home screen for returning users** (section 6, `home_screen.dart`) — manually confirmed working: View My Plan / Generate New Plan flow, back-navigation, and the first-time-generation-skips-Home behavior
+- **Visual design pass** — ember theme, per-screen polish, confirmed rendering correctly via an actual iOS Simulator screenshot (not just `flutter analyze`)
+- **Real app identifiers** (`com.chalkedin.app` for iOS + Android, section 3) — verified via successful `flutter build apk`/`flutter build ios --simulator` and a working install+launch on the simulator with Firebase initializing correctly
 
-**🟡 Built this session (2026-08-31), not yet manually tested:**
-- Email/password auth (sign-up, log-in, sign-out) — code is written and analyzes clean, but hasn't been clicked through yet. **Also needs Email/Password enabled in the Firebase console (Authentication → Sign-in method) before it can work at all** — not yet confirmed done. Not yet committed to git.
+**🟡 In progress:**
+- **Apple Developer Program enrollment** — user chose to enroll ($99/year, at developer.apple.com/programs, individual account) specifically to get TestFlight distribution for the friend test. Started 2026-09-01; Apple's approval can take anywhere from minutes to a couple of days. Once approved: create the App Store Connect record for `com.chalkedin.app`, set up a TestFlight internal/external testing group, invite friends by email.
+- **Android distribution** — no account needed for the basics: `flutter build apk` produces an installable file friends can sideload directly. Not yet actually built/shared. A Play Console account ($25 one-time) is only needed for Play Store-style install links instead of a raw file.
 
 **⏸️ Backend complete, no frontend UI:**
-- Periodization/program engine (`/api/program-status`). Explicitly on hold — user wants flexible custom-phase support when it's eventually built, not a fixed template. See section 5 for the separate, more fundamental question of whether the "training max" concept it depends on (`TrainingMaxes`) is worth building out at all.
+- Periodization/program engine (`/api/program-status`). Explicitly on hold — user wants flexible custom-phase support when it's eventually built. See section 5 on whether the "training max" concept it depends on is worth building out at all.
 
 **⬜ Not started:**
 - Injuries-based exercise exclusion (the `injuries` field is collected but never used in generation logic)
-- Streaks
-- Wearable integration
-- Visual design pass — explicitly reconsidered and reconfirmed as deferred on 2026-08-31 after looking at the live (still-default-themed) app; still waiting until logging/auth are both fully solid
-- Deployment: backend still only runs on `localhost:8080`; no host chosen yet, no domain purchased (and none needed yet — see the deployment discussion this session, a free host subdomain is enough for the friend test)
-- Pre-launch prep (Apple Developer Program enrollment, Play Console setup, privacy policy)
+- Streaks, wearable integration (both explicitly deferred to after the friend test)
+- **Backend deployment — now a real blocker, not just nice-to-have.** Backend still only runs on `localhost:8080`. This was low-priority while everything was tested locally, but now that the goal is friends running the app as an installed app on their own physical devices, `localhost` is unreachable from any device but the developer's own Mac (iOS Simulator is the one exception — it shares the Mac's network stack, so `localhost` works there without deployment). Needs a real host (Cloud Run fits naturally given the existing GCP/Firebase project; Railway/Render are simpler alternatives) plus making the frontend's hardcoded `http://localhost:8080` (in `intake_screen.dart` and `workout_log_screen.dart`) configurable.
+- Play Console setup, privacy policy (pre-launch prep)
 - The actual friend test (the whole point of the project so far)
+
+**Known gotcha (iOS Simulator + Keychain):** installing a build via `xcrun simctl install`/`launch` after building with `flutter build ios --simulator --no-codesign` can produce a Keychain access error specifically when Firebase Auth tries to read an existing signed-in session (login fails; fresh sign-up can look fine since it doesn't need to *read* a prior session). Root cause: Firebase Auth's iOS SDK needs a properly resolved keychain-access-group entitlement, which an unsigned build doesn't reliably get. Fix: drop `--no-codesign` (plain `flutter build ios --simulator`, or just `flutter run`, handles simulator signing correctly) and reinstall.
 
 ---
 
 ## 11. Suggested Immediate Next Steps
 
-1. **Enable Email/Password sign-in in the Firebase console**, then click-through test sign-up → profile setup → intake → plan, sign-out, and log back in on the same device to confirm the whole auth loop works.
-2. Commit and push the auth changes (`main.dart`, `startup_screen.dart`, new `auth_screen.dart`, `plan_screen.dart`'s sign-out button) once verified.
-3. Decide deliberately whether the training-max system (section 5) is worth building for real, or whether direct-1RM-scaling + flat-increment logging adjustment is good enough for the friend test.
-4. Deploy the backend somewhere with a stable HTTPS URL (Cloud Run fits naturally given the existing GCP/Firebase project; Railway/Render are simpler alternatives) and make the frontend's API base URL configurable instead of hardcoded `localhost:8080` — needed before anyone besides the developer can use the app on their own device.
-5. Once auth + logging are both confirmed solid: design pass → pre-launch prep → real friend test with 4-6 people over 2-4 weeks.
+1. Once Apple Developer Program enrollment is approved: set up App Store Connect + TestFlight for `com.chalkedin.app`, invite friends.
+2. Build and share an Android APK directly (`flutter build apk`) whenever ready — no account/approval wait needed, could happen before step 1 finishes.
+3. **Deploy the backend** — this now blocks any friend actually using the app on their own device, iOS or Android. Pick a host, deploy, make the frontend's API base URL configurable instead of hardcoded `localhost:8080`.
+4. Decide deliberately whether the training-max system (section 5) is worth building for real, or whether direct-1RM-scaling + flat-increment logging adjustment is good enough for the friend test.
+5. Pre-launch prep once the above are done: Play Console setup, privacy policy → real friend test with 4-6 people over 2-4 weeks.
 6. Periodization UI, streaks, and wearables are all real but explicitly *not* urgent — don't let them pull focus from getting to the friend test.
