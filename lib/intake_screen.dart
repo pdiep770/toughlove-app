@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'plan_screen.dart';
 import 'workout_plan.dart';
 import 'firestore_service.dart';
+import 'api_config.dart';
 
 class IntakeScreen extends StatefulWidget {
   const IntakeScreen({super.key});
@@ -29,7 +30,7 @@ class _IntakeScreenState extends State<IntakeScreen> {
       _equipmentAccess == 'full_gym';
 
   Future<void> _submitForm() async {
-    final url = Uri.parse('http://localhost:8080/api/generate-plan');
+    final url = Uri.parse('$apiBaseUrl/api/generate-plan');
 
     final response = await http.post(
       url,

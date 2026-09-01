@@ -5,6 +5,7 @@ import 'exercise.dart';
 import 'workout_day.dart';
 import 'adjustment_result.dart';
 import 'firestore_service.dart';
+import 'api_config.dart';
 
 class WorkoutLogScreen extends StatefulWidget {
   final String dayLabel;
@@ -55,7 +56,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   Future<void> _submitLog() async {
     setState(() => _submitting = true);
 
-    final url = Uri.parse('http://localhost:8080/api/log-workout');
+    final url = Uri.parse('$apiBaseUrl/api/log-workout');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
