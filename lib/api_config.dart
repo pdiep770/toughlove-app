@@ -1,2 +1,1 @@
-// Update this once the backend is deployed (see CLAUDE.md section 11).
-const String apiBaseUrl = 'http://localhost:8080';
+const String apiBaseUrl = 'https://chalked-in-backend.onrender.com';
