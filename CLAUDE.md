@@ -39,7 +39,7 @@ This should be cleaned up at some point (`git branch -M main && git push -u orig
 
 ## 3. Tech Stack
 
-- **Backend:** Java 21, Spring Boot 4.1.0 (via `spring-boot-starter-parent`), Maven (`./mvnw spring-boot:run`, runs on `localhost:8080`)
+- **Backend:** Java 21, Spring Boot 4.1.0 (via `spring-boot-starter-parent`), Maven (`./mvnw spring-boot:run` for local dev, `localhost:8080`). **Deployed to Render** (free tier, Docker-based via the repo's `Dockerfile`) at `https://chalked-in-backend.onrender.com` — auto-deploys on every push to `mainline`. `server.port` is a fixed `8080` matching the Dockerfile's `EXPOSE 8080`, not dynamically read from `PORT` — see the Render/Docker/PORT gotcha in section 10 for why.
 - **Frontend:** Flutter/Dart, targets iOS + Android + Web from one codebase
 - **Database & Auth:** Firebase — Firestore (NoSQL) + Firebase Authentication with real email/password accounts (switched 2026-08-31 from Anonymous Auth — see section 6 and section 8's design-decisions entry)
 - **Firebase project ID:** `liftwithfriends-44d7a` (internal project name is a holdover from an earlier app name — cosmetic mismatch with "Chalked In" branding, never fixed, no functional impact)
@@ -236,6 +236,7 @@ Established through this project's development; use these approaches rather than
 - **Home screen for returning users** (section 6, `home_screen.dart`) — manually confirmed working: View My Plan / Generate New Plan flow, back-navigation, and the first-time-generation-skips-Home behavior
 - **Visual design pass** — ember theme, per-screen polish, confirmed rendering correctly via an actual iOS Simulator screenshot (not just `flutter analyze`)
 - **Real app identifiers** (`com.chalkedin.app` for iOS + Android, section 3) — verified via successful `flutter build apk`/`flutter build ios --simulator` and a working install+launch on the simulator with Firebase initializing correctly
+- **Backend deployed and live** at `https://chalked-in-backend.onrender.com` (Render, free tier, Docker-based — see section 3/`Dockerfile`). Frontend's `api_config.dart` points at it. Verified with both `/api/hello` and a real `/api/generate-plan` call returning a correct 5-day cycling plan. Free tier spins down after ~15 min idle; first request after that can take 30-60s to wake — expected, not a bug.
 
 **🟡 In progress:**
 - **Apple Developer Program enrollment** — user chose to enroll ($99/year, at developer.apple.com/programs, individual account) specifically to get TestFlight distribution for the friend test. Started 2026-09-01; Apple's approval can take anywhere from minutes to a couple of days. Once approved: create the App Store Connect record for `com.chalkedin.app`, set up a TestFlight internal/external testing group, invite friends by email.
@@ -247,11 +248,13 @@ Established through this project's development; use these approaches rather than
 **⬜ Not started:**
 - Injuries-based exercise exclusion (the `injuries` field is collected but never used in generation logic)
 - Streaks, wearable integration (both explicitly deferred to after the friend test)
-- **Backend deployment — now a real blocker, not just nice-to-have.** Backend still only runs on `localhost:8080`. This was low-priority while everything was tested locally, but now that the goal is friends running the app as an installed app on their own physical devices, `localhost` is unreachable from any device but the developer's own Mac (iOS Simulator is the one exception — it shares the Mac's network stack, so `localhost` works there without deployment). Needs a real host (Cloud Run fits naturally given the existing GCP/Firebase project; Railway/Render are simpler alternatives) plus making the frontend's hardcoded `http://localhost:8080` (in `intake_screen.dart` and `workout_log_screen.dart`) configurable.
+- CORS is still `allowedOrigins("*")` — fine for the friend test, worth tightening to the real app's origin(s) before any wider/public launch
 - Play Console setup, privacy policy (pre-launch prep)
 - The actual friend test (the whole point of the project so far)
 
 **Known gotcha (iOS Simulator + Keychain):** installing a build via `xcrun simctl install`/`launch` after building with `flutter build ios --simulator --no-codesign` can produce a Keychain access error specifically when Firebase Auth tries to read an existing signed-in session (login fails; fresh sign-up can look fine since it doesn't need to *read* a prior session). Root cause: Firebase Auth's iOS SDK needs a properly resolved keychain-access-group entitlement, which an unsigned build doesn't reliably get. Fix: drop `--no-codesign` (plain `flutter build ios --simulator`, or just `flutter run`, handles simulator signing correctly) and reinstall.
+
+**Known gotcha (Render + Docker + PORT), fixed 2026-09-01:** the first deploy attempt built and started cleanly (logs showed `Started BackendApplication`, no errors) but was completely unreachable — every request got `x-render-routing: no-server` from Render's edge, not an app-level 404. Root cause: `server.port` was set to `${PORT:8080}`, dynamically honoring whatever `PORT` Render injected at runtime (observed as `10000` in the logs) — but Render's routing layer for this Docker service targets the port declared via the Dockerfile's `EXPOSE` line (`8080`), not whatever the app happens to bind to. The app and Render's proxy were listening/routing on two different ports. Fix: pinned `server.port=8080` (a fixed value matching `EXPOSE 8080`) instead of dynamically reading `PORT` — don't reintroduce dynamic PORT-reading for this service without also confirming it against Render's actual routing behavior, since it silently produces a "successfully running but totally unreachable" state that looks nothing like a normal crash.
 
 ---
 
@@ -259,7 +262,6 @@ Established through this project's development; use these approaches rather than
 
 1. Once Apple Developer Program enrollment is approved: set up App Store Connect + TestFlight for `com.chalkedin.app`, invite friends.
 2. Build and share an Android APK directly (`flutter build apk`) whenever ready — no account/approval wait needed, could happen before step 1 finishes.
-3. **Deploy the backend** — this now blocks any friend actually using the app on their own device, iOS or Android. Pick a host, deploy, make the frontend's API base URL configurable instead of hardcoded `localhost:8080`.
-4. Decide deliberately whether the training-max system (section 5) is worth building for real, or whether direct-1RM-scaling + flat-increment logging adjustment is good enough for the friend test.
-5. Pre-launch prep once the above are done: Play Console setup, privacy policy → real friend test with 4-6 people over 2-4 weeks.
+3. Decide deliberately whether the training-max system (section 5) is worth building for real, or whether direct-1RM-scaling + flat-increment logging adjustment is good enough for the friend test.
+4. Pre-launch prep once the above are done: Play Console setup, privacy policy, tighten CORS → real friend test with 4-6 people over 2-4 weeks.
 6. Periodization UI, streaks, and wearables are all real but explicitly *not* urgent — don't let them pull focus from getting to the friend test.
