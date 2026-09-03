@@ -6,6 +6,7 @@ import 'workout_day.dart';
 import 'adjustment_result.dart';
 import 'firestore_service.dart';
 import 'api_config.dart';
+import 'training_maxes.dart';
 
 class WorkoutLogScreen extends StatefulWidget {
   final String dayLabel;
@@ -26,6 +27,7 @@ class WorkoutLogScreen extends StatefulWidget {
 class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   late final List<TextEditingController> _weightControllers;
   late final List<String> _feltRatings;
+  late final Future<TrainingMaxes?> _trainingMaxesFuture;
   bool _submitting = false;
   List<AdjustmentResult>? _results;
 
@@ -43,6 +45,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         .map((ex) => TextEditingController(text: ex.weight.toStringAsFixed(0)))
         .toList();
     _feltRatings = List.filled(widget.exercises.length, 'moderate');
+    _trainingMaxesFuture = FirestoreService().getTrainingMaxes();
   }
 
   @override
@@ -55,6 +58,8 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
 
   Future<void> _submitLog() async {
     setState(() => _submitting = true);
+
+    final currentTrainingMaxes = await _trainingMaxesFuture;
 
     final url = Uri.parse('$apiBaseUrl/api/log-workout');
     final response = await http.post(
@@ -74,6 +79,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
             'feltRating': _feltRatings[i],
           };
         }),
+        'trainingMaxes': currentTrainingMaxes?.toJson(),
       }),
     );
 
@@ -95,6 +101,11 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         dayLabel: widget.dayLabel,
         exercises: updatedExercises,
       );
+      if (decoded['trainingMaxes'] != null) {
+        await FirestoreService().updateTrainingMaxes(
+          TrainingMaxes.fromJson(decoded['trainingMaxes']),
+        );
+      }
 
       setState(() {
         _results = results;

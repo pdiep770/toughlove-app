@@ -15,14 +15,19 @@ class WeightPoint {
 
 /// Extracts a (date, weight) series per tracked lift from raw log documents,
 /// sorted oldest-to-newest for charting. Lifts with no logged entries are
-/// omitted from the result entirely.
+/// omitted from the result entirely. At most one point per calendar day per
+/// lift -- if a lift was logged more than once on the same day, the latest
+/// entry that day wins. Without this, days with more than one log produce
+/// extra x-axis ticks that land on the same calendar date, rendering as a
+/// visibly repeated date label.
 Map<String, List<WeightPoint>> extractTrackedLiftSeries(List<Map<String, dynamic>> logs) {
-  final series = <String, List<WeightPoint>>{};
+  final byLiftAndDay = <String, Map<DateTime, WeightPoint>>{};
 
   for (final log in logs) {
     final loggedAt = log['loggedAt'];
     if (loggedAt is! Timestamp) continue;
     final date = loggedAt.toDate();
+    final day = DateTime(date.year, date.month, date.day);
 
     final exercises = log['exercises'] as List? ?? [];
     for (final ex in exercises) {
@@ -32,13 +37,16 @@ Map<String, List<WeightPoint>> extractTrackedLiftSeries(List<Map<String, dynamic
       final weight = ex['weight'];
       if (weight is! num) continue;
 
-      series.putIfAbsent(name, () => []).add(WeightPoint(date, weight.toDouble()));
+      final pointsByDay = byLiftAndDay.putIfAbsent(name, () => {});
+      final existing = pointsByDay[day];
+      if (existing == null || date.isAfter(existing.date)) {
+        pointsByDay[day] = WeightPoint(date, weight.toDouble());
+      }
     }
   }
 
-  for (final points in series.values) {
-    points.sort((a, b) => a.date.compareTo(b.date));
-  }
-
-  return series;
+  return byLiftAndDay.map((name, pointsByDay) {
+    final points = pointsByDay.values.toList()..sort((a, b) => a.date.compareTo(b.date));
+    return MapEntry(name, points);
+  });
 }

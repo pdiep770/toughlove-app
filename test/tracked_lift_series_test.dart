@@ -63,5 +63,48 @@ void main() {
     test('returns empty map for no logs', () {
       expect(extractTrackedLiftSeries([]), isEmpty);
     });
+
+    test('collapses multiple same-day logs of the same lift into one point, keeping the latest', () {
+      final logs = [
+        {
+          'loggedAt': Timestamp.fromDate(DateTime(2026, 9, 3, 9, 0)),
+          'exercises': [
+            {'name': 'Barbell Squat', 'weight': 245.0},
+          ],
+        },
+        {
+          'loggedAt': Timestamp.fromDate(DateTime(2026, 9, 3, 17, 0)),
+          'exercises': [
+            {'name': 'Barbell Squat', 'weight': 250.0},
+          ],
+        },
+      ];
+
+      final series = extractTrackedLiftSeries(logs);
+
+      expect(series['Barbell Squat'], hasLength(1));
+      expect(series['Barbell Squat']![0].weight, 250.0); // the later log that day wins
+    });
+
+    test('keeps separate points for the same lift on different days', () {
+      final logs = [
+        {
+          'loggedAt': Timestamp.fromDate(DateTime(2026, 9, 1)),
+          'exercises': [
+            {'name': 'Deadlift', 'weight': 300.0},
+          ],
+        },
+        {
+          'loggedAt': Timestamp.fromDate(DateTime(2026, 9, 3)),
+          'exercises': [
+            {'name': 'Deadlift', 'weight': 310.0},
+          ],
+        },
+      ];
+
+      final series = extractTrackedLiftSeries(logs);
+
+      expect(series['Deadlift'], hasLength(2));
+    });
   });
 }

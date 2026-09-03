@@ -157,6 +157,21 @@ class _WeightTrendChart extends StatelessWidget {
 
   const _WeightTrendChart({required this.series, required this.seriesColors});
 
+  // fl_chart's automatic tick spacing has no notion of a calendar day -- left to
+  // itself it can place several ticks within the same day, which all render the
+  // same "month/day" label. Flooring the interval at one day (and otherwise aiming
+  // for a handful of ticks across the full range) guarantees every rendered tick
+  // lands on a distinct calendar date.
+  static const _oneDayMs = 86400000.0;
+  static const _maxTicks = 5;
+
+  double _tickInterval(double minX, double maxX) {
+    final span = maxX - minX;
+    if (span <= 0) return _oneDayMs;
+    final rawInterval = span / _maxTicks;
+    return rawInterval < _oneDayMs ? _oneDayMs : rawInterval;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -215,6 +230,7 @@ class _WeightTrendChart extends StatelessWidget {
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 28,
+                    interval: _tickInterval(minX, maxX),
                     getTitlesWidget: (value, meta) {
                       final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
                       return Padding(
