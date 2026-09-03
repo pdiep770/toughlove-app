@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'friend_service.dart';
 import 'user_profile_service.dart';
 import 'chat_screen.dart';
+import 'streak_service.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -15,6 +16,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   String? _myFriendCode;
   List<Map<String, dynamic>> _pendingRequests = [];
   List<Map<String, dynamic>> _friends = [];
+  Map<String, int> _streaks = {};
   bool _loading = true;
   String? _statusMessage;
 
@@ -29,11 +31,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final profile = await UserProfileService().getProfile();
     final requests = await FriendService().getPendingRequests();
     final friends = await FriendService().getFriends();
+
+    final streakService = StreakService();
+    final streakEntries = await Future.wait(friends.map((f) async {
+      final uid = f['uid'] as String;
+      return MapEntry(uid, await streakService.getStreakWith(uid));
+    }));
+
     if (mounted) {
       setState(() {
         _myFriendCode = profile?['friendCode'];
         _pendingRequests = requests;
         _friends = friends;
+        _streaks = Map.fromEntries(streakEntries);
         _loading = false;
       });
     }
@@ -143,10 +153,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   if (_friends.isEmpty)
                     const Text('No friends yet — share your code above!')
                   else
-                    ..._friends.map((f) => Card(
+                    ..._friends.map((f) {
+                      final streak = _streaks[f['uid']] ?? 0;
+                      return Card(
                           child: ListTile(
                             leading: const Icon(Icons.person),
                             title: Text(f['displayName']),
+                            subtitle: streak > 0 ? Text('🔥 $streak day streak') : null,
                             trailing: const Icon(Icons.chat_bubble_outline),
                             onTap: () {
                               Navigator.push(
@@ -157,7 +170,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               );
                             },
                           ),
-                        )),
+                        );
+                    }),
                 ],
               ),
             ),

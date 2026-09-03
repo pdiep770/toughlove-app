@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_service.dart';
+import 'streak_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String friendUid;
@@ -32,7 +33,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _send() {
     if (_conversationId == null) return;
-    ChatService().sendMessage(_conversationId!, _messageController.text);
+    if (_messageController.text.trim().isEmpty) return;
+
+    final friendUid = widget.friendUid;
+    ChatService().sendMessage(_conversationId!, _messageController.text).then((_) {
+      StreakService().touchStreakWithFriend(friendUid);
+    });
     _messageController.clear();
   }
 

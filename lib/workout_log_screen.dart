@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'exercise.dart';
@@ -7,6 +8,8 @@ import 'adjustment_result.dart';
 import 'firestore_service.dart';
 import 'api_config.dart';
 import 'training_maxes.dart';
+import 'friend_service.dart';
+import 'streak_service.dart';
 
 class WorkoutLogScreen extends StatefulWidget {
   final String dayLabel;
@@ -106,6 +109,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
           TrainingMaxes.fromJson(decoded['trainingMaxes']),
         );
       }
+      unawaited(_touchStreaksWithFriends());
 
       setState(() {
         _results = results;
@@ -119,6 +123,15 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
         );
       }
     }
+  }
+
+  // A logged workout is a fact about this one person, not about any specific
+  // friend, so it extends the streak with every friend they have -- unlike a
+  // chat message, which is already scoped to one conversation. Fire-and-forget:
+  // doesn't block showing the results screen on a handful of Firestore writes.
+  Future<void> _touchStreaksWithFriends() async {
+    final friends = await FriendService().getFriends();
+    await StreakService().touchStreakWithAllFriends(friends.map((f) => f['uid'] as String).toList());
   }
 
   @override

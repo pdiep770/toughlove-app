@@ -7,8 +7,10 @@ class ChatService {
   String? get _myUid => FirebaseAuth.instance.currentUser?.uid;
 
   // Deterministic conversation ID from two UIDs, so both people always land
-  // on the same conversation regardless of who opens it first
-  String _conversationId(String uid1, String uid2) {
+  // on the same conversation regardless of who opens it first. Public so
+  // streak_service.dart can address the same conversation doc without
+  // duplicating this logic.
+  String conversationId(String uid1, String uid2) {
     final ids = [uid1, uid2]..sort();
     return '${ids[0]}_${ids[1]}';
   }
@@ -17,7 +19,7 @@ class ChatService {
     final myUid = _myUid;
     if (myUid == null) throw Exception('Not signed in');
 
-    final convoId = _conversationId(myUid, friendUid);
+    final convoId = conversationId(myUid, friendUid);
     final convoRef = _db.collection('conversations').doc(convoId);
     final convoDoc = await convoRef.get();
 
