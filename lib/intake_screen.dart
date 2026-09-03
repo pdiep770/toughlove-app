@@ -18,6 +18,7 @@ class _IntakeScreenState extends State<IntakeScreen> {
   int? _daysPerWeek;
   String? _goal;
   String? _equipmentAccess;
+  String? _splitTypeOverride;
   bool _includeExplosiveTraining = false;
   final TextEditingController _injuriesController = TextEditingController();
   final TextEditingController _squatMaxController = TextEditingController();
@@ -40,6 +41,7 @@ class _IntakeScreenState extends State<IntakeScreen> {
         'daysPerWeek': _daysPerWeek,
         'goal': _goal,
         'equipmentAccess': _equipmentAccess,
+        'splitTypeOverride': _splitTypeOverride,
         'injuries': _injuriesController.text,
         'includeExplosiveTraining': _includeExplosiveTraining,
         'squatOneRepMax': double.tryParse(_squatMaxController.text),
@@ -112,6 +114,20 @@ class _IntakeScreenState extends State<IntakeScreen> {
                   DropdownMenuItem(value: 6, child: Text('6 days')),
                 ],
                 onChanged: (value) => setState(() => _daysPerWeek = value),
+              ),
+              const SizedBox(height: 16),
+
+              const Text('Split (optional)'),
+              const SizedBox(height: 4),
+              DropdownButtonFormField<String?>(
+                initialValue: _splitTypeOverride,
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('Auto (recommended)')),
+                  DropdownMenuItem(value: 'full_body', child: Text('Full Body')),
+                  DropdownMenuItem(value: 'upper_lower', child: Text('Upper / Lower')),
+                  DropdownMenuItem(value: 'push_pull_legs', child: Text('Push / Pull / Legs')),
+                ],
+                onChanged: (value) => setState(() => _splitTypeOverride = value),
               ),
               const SizedBox(height: 16),
 
