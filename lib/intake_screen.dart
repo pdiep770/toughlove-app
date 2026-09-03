@@ -26,6 +26,15 @@ class _IntakeScreenState extends State<IntakeScreen> {
   final TextEditingController _deadliftMaxController = TextEditingController();
   final TextEditingController _ohpMaxController = TextEditingController();
 
+  Set<String?> get _availableSplitValues => {
+        null,
+        'full_body',
+        'upper_lower',
+        'push_pull_legs',
+        if (_daysPerWeek == 5) 'pplul',
+        if (_daysPerWeek == 6) 'arnold_split',
+      };
+
   bool get _showMaxFields =>
       (_experienceLevel == 'intermediate' || _experienceLevel == 'advanced') &&
       _equipmentAccess == 'full_gym';
@@ -113,7 +122,12 @@ class _IntakeScreenState extends State<IntakeScreen> {
                   DropdownMenuItem(value: 5, child: Text('5 days')),
                   DropdownMenuItem(value: 6, child: Text('6 days')),
                 ],
-                onChanged: (value) => setState(() => _daysPerWeek = value),
+                onChanged: (value) => setState(() {
+                  _daysPerWeek = value;
+                  if (!_availableSplitValues.contains(_splitTypeOverride)) {
+                    _splitTypeOverride = null;
+                  }
+                }),
               ),
               const SizedBox(height: 16),
 
@@ -121,14 +135,26 @@ class _IntakeScreenState extends State<IntakeScreen> {
               const SizedBox(height: 4),
               DropdownButtonFormField<String?>(
                 initialValue: _splitTypeOverride,
-                items: const [
-                  DropdownMenuItem(value: null, child: Text('Auto (recommended)')),
-                  DropdownMenuItem(value: 'full_body', child: Text('Full Body')),
-                  DropdownMenuItem(value: 'upper_lower', child: Text('Upper / Lower')),
-                  DropdownMenuItem(value: 'push_pull_legs', child: Text('Push / Pull / Legs')),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Auto (recommended)')),
+                  const DropdownMenuItem(value: 'full_body', child: Text('Full Body')),
+                  const DropdownMenuItem(value: 'upper_lower', child: Text('Upper / Lower')),
+                  const DropdownMenuItem(value: 'push_pull_legs', child: Text('Push / Pull / Legs')),
+                  if (_daysPerWeek == 5)
+                    const DropdownMenuItem(value: 'pplul', child: Text('Push / Pull / Legs / Upper / Lower')),
+                  if (_daysPerWeek == 6)
+                    const DropdownMenuItem(value: 'arnold_split', child: Text('Chest/Back • Shoulders/Arms • Legs')),
                 ],
                 onChanged: (value) => setState(() => _splitTypeOverride = value),
               ),
+              if (_experienceLevel == 'beginner' &&
+                  (_splitTypeOverride == 'pplul' || _splitTypeOverride == 'arnold_split')) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'This split is generally recommended for lifters with 6-12+ months of consistent training experience.',
+                  style: TextStyle(fontSize: 12, color: colorScheme.error),
+                ),
+              ],
               const SizedBox(height: 16),
 
               const Text('Goal'),
