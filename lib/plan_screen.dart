@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'workout_plan.dart';
 import 'workout_day.dart';
-import 'friends_screen.dart';
 import 'workout_log_screen.dart';
+import 'intake_screen.dart';
 
 class PlanScreen extends StatefulWidget {
   final WorkoutPlan plan;
@@ -46,10 +45,30 @@ class _PlanScreenState extends State<PlanScreen> {
     }
   }
 
-  Future<void> _signOut() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+  Future<void> _confirmNewPlan() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Generate a new plan?'),
+        content: const Text('This will replace your current plan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const IntakeScreen()),
+      );
     }
   }
 
@@ -59,6 +78,8 @@ class _PlanScreenState extends State<PlanScreen> {
     if (dayLabel.contains('Legs') || dayLabel.contains('Lower')) return Icons.directions_run;
     if (dayLabel.contains('Upper')) return Icons.fitness_center;
     if (dayLabel.contains('Full Body')) return Icons.self_improvement;
+    if (dayLabel.contains('Chest/Back')) return Icons.accessibility_new;
+    if (dayLabel.contains('Shoulders/Arms')) return Icons.sports_gymnastics;
     return Icons.fitness_center;
   }
 
@@ -71,16 +92,9 @@ class _PlanScreenState extends State<PlanScreen> {
         title: Text('Your ${widget.plan.splitType.replaceAll('_', ' ')} plan'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people),
-            tooltip: 'Friends',
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const FriendsScreen()));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Log out',
-            onPressed: _signOut,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Generate new plan',
+            onPressed: _confirmNewPlan,
           ),
         ],
       ),

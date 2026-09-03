@@ -102,4 +102,20 @@ class FirestoreService {
       },
     }, SetOptions(merge: true));
   }
+
+  Future<List<Map<String, dynamic>>> getLogs() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      throw Exception('No signed-in user found');
+    }
+
+    final snapshot = await _db
+        .collection('users')
+        .doc(uid)
+        .collection('logs')
+        .orderBy('loggedAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
 }

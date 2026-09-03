@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'plan_screen.dart';
+import 'main_tab_screen.dart';
 import 'workout_plan.dart';
 import 'firestore_service.dart';
 import 'api_config.dart';
@@ -24,7 +24,6 @@ class _IntakeScreenState extends State<IntakeScreen> {
   final TextEditingController _squatMaxController = TextEditingController();
   final TextEditingController _benchMaxController = TextEditingController();
   final TextEditingController _deadliftMaxController = TextEditingController();
-  final TextEditingController _ohpMaxController = TextEditingController();
 
   Set<String?> get _availableSplitValues => {
         null,
@@ -56,7 +55,6 @@ class _IntakeScreenState extends State<IntakeScreen> {
         'squatOneRepMax': double.tryParse(_squatMaxController.text),
         'benchOneRepMax': double.tryParse(_benchMaxController.text),
         'deadliftOneRepMax': double.tryParse(_deadliftMaxController.text),
-        'overheadPressOneRepMax': double.tryParse(_ohpMaxController.text),
       }),
     );
 
@@ -77,7 +75,7 @@ class _IntakeScreenState extends State<IntakeScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => PlanScreen(plan: plan, goal: _goal!)),
+          MaterialPageRoute(builder: (context) => MainTabScreen(plan: plan, goal: _goal!)),
         );
       }
     } else {
@@ -198,8 +196,6 @@ class _IntakeScreenState extends State<IntakeScreen> {
                 _maxField('Bench Press', _benchMaxController),
                 const SizedBox(height: 8),
                 _maxField('Deadlift', _deadliftMaxController),
-                const SizedBox(height: 8),
-                _maxField('Overhead Press', _ohpMaxController),
               ],
             ),
 

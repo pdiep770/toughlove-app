@@ -137,7 +137,7 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                     children: [
                       const Text('Weight used: '),
                       SizedBox(
-                        width: 80,
+                        width: 110,
                         child: TextField(
                           controller: _weightControllers[i],
                           keyboardType: TextInputType.number,
@@ -196,8 +196,6 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(result.updatedExercise.name, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(result.explanation),
                   const SizedBox(height: 4),
                   Text(
                     'Next time: ${result.updatedExercise.sets}x${result.updatedExercise.repsLow}-${result.updatedExercise.repsHigh} @ ${result.updatedExercise.weight.toStringAsFixed(0)} lbs',
