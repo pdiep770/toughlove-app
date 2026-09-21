@@ -260,7 +260,7 @@ Established through this project's development; use these approaches rather than
 
 ---
 
-## 10. Current Status (as of 2026-09-03)
+## 10. Current Status (as of 2026-09-21)
 
 **✅ Built and confirmed working end-to-end (all committed and pushed to `mainline` in both repos):**
 - Intake → plan generation → Firestore persistence, with day count correctly matching `daysPerWeek` for the three cyclable splits, plus two fixed-sequence splits (`pplul`, 6-day chest/back-shoulders/arms-legs) and a manual split-override picker (section 4/6)
@@ -277,7 +277,8 @@ Established through this project's development; use these approaches rather than
 - CORS tightened from `allowedOrigins("*")` to localhost-only patterns (section 4) — `./mvnw clean compile` clean after the change
 - Training max system, fully live (section 5) — seeding, compounded scaling, and logging nudges all verified via 66 passing backend tests + hand-checked real `curl` calls; frontend wired end-to-end (`flutter analyze`/`flutter test` clean), simulator smoke-tested for no startup crash. **Not yet click-tested end-to-end against the deployed backend** — Render doesn't have this code until it's committed and pushed (auto-deploys on push to `mainline`)
 - Streaks, fully live (section 6/8) — `flutter analyze`/`flutter test` clean (25 frontend tests total, 10 new for streak date-math), simulator smoke-tested for no startup crash. **Not yet click-tested with two real accounts** — needs the two-browser-identity method (section 9) to actually confirm a `streakCount` increments correctly day-to-day, which isn't easily simulated in one sitting since the "consecutive day" logic depends on real calendar days passing
-- Backend deployed and live at `https://chalked-in-backend.onrender.com` (Render, free tier, Docker-based). Frontend's `api_config.dart` points at it.
+- Ratio-based weight scaling now covers **every** full-gym isolation exercise, not just the leg group (section 4, bugs #3/#4, extended 2026-09-08) — bench- and deadlift-anchored ratios for chest fly, lateral raise, tricep pushdown, skull crushers, face pulls, and all three curl variants. `Assisted Dip Machine` deliberately excluded (its "weight" is assistance, not load — a ratio would backwards-scale it).
+- Backend deployed and live at `https://chalked-in-backend.onrender.com` (Render, free tier, Docker-based, confirmed healthy 2026-09-21), matching the latest pushed commit on both repos — `git log origin/mainline..HEAD` is clean on both as of this check, nothing sitting unpushed.
 
 **🟡 In progress:**
 - **Apple Developer Program enrollment — correction 2026-09-03: NOT actually started yet**, despite this doc previously (wrongly) saying it began 2026-09-01. User has decided to enroll ($99/year, individual account) specifically for TestFlight distribution, but hasn't gone through the actual signup at developer.apple.com yet. This is now the single blocking step for the whole friend test — see section 11. Once enrolled and approved: App Store Connect record for `com.chalkedin.app`, TestFlight external-testing group (friends aren't Apple Developer team members, so **External Testing**, not Internal — External allows invite-by-email without adding them to the account, at the cost of a one-time lightweight Beta App Review, usually 24-48h, on the first build), invite friends by email.
@@ -288,7 +289,7 @@ Established through this project's development; use these approaches rather than
 
 **⬜ Not started:**
 - Injuries-based exercise exclusion (the `injuries` field is collected but never used in generation logic)
-- Streaks, wearable integration (both explicitly deferred to after the friend test)
+- Periodization UI and wearables (Apple Watch/HealthKit) — both discussed and greenlit 2026-09-03, neither actually started (no commits exist for either) despite an earlier version of this doc saying periodization UI was "in progress" — that was aspirational, not actual, and got corrected 2026-09-21. Genuinely still queued, see section 11.
 - **Gym map + ratings** — proposed and then explicitly deferred 2026-09-01 (see section 8's design-decisions entry for the full reasoning: doesn't serve the core hypothesis, low-value at friend-test scale). Considered again briefly while scoping the tab navigation and deferred a second time for the same reasons — not part of the current 4-tab structure at all, not even a placeholder tab. If it comes back a third time, that's worth treating as a real signal rather than deferring by default.
 - Play Console setup, privacy policy (pre-launch prep)
 - The actual friend test (the whole point of the project so far)
@@ -305,9 +306,10 @@ Established through this project's development; use these approaches rather than
 
 1. **The critical path is now: enroll in the Apple Developer Program (not yet started, see section 10) → wait for approval → App Store Connect + TestFlight external testing group.** Every current friend-test participant is on iOS, so **Play Console/Android is deprioritized** (not abandoned — groundwork exists, see section 10) and isn't blocking anything. Enrollment itself is a user-side action at developer.apple.com/programs/enroll (Apple ID, $99/year, identity verification — individual enrollment is usually fast, sometimes near-instant, unlike organization enrollment which needs a D-U-N-S number and can take longer) — nothing to build or configure on the code side until it's done.
 2. ~~App icon blocker~~ — **resolved 2026-09-03**, see section 8's design-decision entry. Real "Chalked In" icon now live on both platforms.
-3. ~~Decide on the training-max system~~ — **decided, then reversed, then built, all 2026-09-03: see section 5.** Committed on both repos, not yet pushed.
+3. ~~Decide on the training-max system~~ — **decided, then reversed, then built, all 2026-09-03: see section 5.** Pushed, live on the deployed backend.
 4. ~~Tighten CORS~~ — **done 2026-09-03**, see section 4.
-5. ~~Streaks~~ — **built 2026-09-03**, see section 6/8. Committed, not yet pushed. Not yet click-tested with two real accounts (see the note under section 10).
-6. **Periodization UI is next** (in progress as of this doc, same session) — the backend engine already exists (`/api/program-status`, section 4), this consumes the training max this session just built. Wearables (Apple Watch/HealthKit) also greenlit for this session, independently of the above — doesn't need Apple Developer Program approval to build/test on a real device via a free Xcode signing team, just for eventual TestFlight distribution.
-7. Gym map/ratings remains explicitly deferred (see section 8) — hasn't come up a third time.
-8. The actual friend test with 4-6 people over 2-4 weeks, once the above is done — the real point of all this.
+5. ~~Streaks~~ — **built 2026-09-03**, see section 6/8. Pushed. Not yet click-tested with two real accounts (see the note under section 10).
+6. ~~Extend ratio-scaling to remaining accessory exercises~~ — **done 2026-09-08**, see section 4. Pushed, live on the deployed backend.
+7. **Periodization UI and wearables (Apple Watch/HealthKit) are next — genuinely not started yet**, no code exists for either despite both being greenlit 2026-09-03. Periodization's backend engine already exists (`/api/program-status`, section 4) and would consume the training max already built; this is the natural next feature. Wearables doesn't need Apple Developer Program approval to build/test on a real device via a free Xcode signing team, just for eventual TestFlight distribution — independent track from everything else.
+8. Gym map/ratings remains explicitly deferred (see section 8) — hasn't come up a third time.
+9. The actual friend test with 4-6 people over 2-4 weeks, once the above is done — the real point of all this.
